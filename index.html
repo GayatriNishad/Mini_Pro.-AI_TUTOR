@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Tutor - Full Course Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Outfit', 'sans-serif'] },
+                    colors: {
+                        warmbg: '#f8f5f0', warmcard: '#ffffff', warmtext: '#2c2825',
+                        warmaccent: '#d97757', warmhover: '#c26244', warmborder: '#e8e2d9'
+                    },
+                    boxShadow: {
+                        '3d': '10px 10px 20px #dedcd8, -10px -10px 20px #ffffff',
+                        '3d-inset': 'inset 5px 5px 10px #dedcd8, inset -5px -5px 10px #ffffff'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f8f5f0; color: #2c2825; overflow-x: hidden; scroll-behavior: smooth; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f8f5f0; }
+        ::-webkit-scrollbar-thumb { background: #d97757; border-radius: 4px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .slide-transition { transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1); }
+        .chart-container { position: relative; width: 100%; max-width: 800px; margin: auto; height: 300px; }
+        .hidden-view { display: none !important; }
+        .modal-overlay { background: rgba(44, 40, 37, 0.6); backdrop-filter: blur(5px); }
+        pre { background-color: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-size: 0.875rem; margin: 0.5rem 0 1rem 0; }
+        code { font-family: monospace; }
+        .profile-img-fit { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; position: absolute; inset: 0; z-index: 10; }
+        #sidebar { z-index: 50; transition: transform 0.3s ease-in-out; }
+        #sidebar-overlay { z-index: 40; }
+    </style>
+</head>
+<body class="font-sans antialiased h-screen flex flex-col">
+
+    <!-- LOGIN MODAL -->
+    <div id="login-view" class="fixed inset-0 z-50 flex items-center justify-center bg-warmbg hidden-view">
+        <div class="bg-warmcard p-8 rounded-3xl shadow-3d w-full max-w-md transform transition-all relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-warmaccent"></div>
+            <div class="text-center mb-8">
+                <div class="mx-auto w-20 h-20 rounded-full bg-gradient-to-tr from-blue-500 via-purple-500 to-orange-500 p-[3px] mb-4">
+                    <div class="w-full h-full bg-white rounded-full flex items-center justify-center text-blue-600 text-3xl relative overflow-hidden">
+                       <i class="fas fa-book-open relative z-10"><i class="fas fa-fire absolute -top-4 left-1/2 transform -translate-x-1/2 text-orange-500 text-lg"></i></i>
+                    </div>
+                </div>
+                <h1 class="text-3xl font-bold text-warmtext mb-2">AI Tutor</h1>
+                <p class="text-gray-500">Log in to begin learning</p>
+            </div>
+            <div id="phone-step">
+                <label class="block text-sm font-medium text-warmtext mb-2">Phone Number</label>
+                <div class="flex border-2 border-warmborder rounded-xl overflow-hidden focus-within:border-warmaccent transition-colors bg-stone-50">
+                    <span class="px-4 py-3 bg-stone-100 text-stone-500 border-r border-warmborder font-semibold">+91</span>
+                    <input type="tel" id="phone-input" class="w-full px-4 py-3 bg-transparent outline-none text-warmtext font-medium tracking-wider" placeholder="Enter 10-digit number" maxlength="10">
+                </div>
+                <p id="phone-error" class="text-red-500 text-sm mt-2 hidden"><i class="fas fa-exclamation-circle mr-1"></i> Invalid number.</p>
+                <button id="send-otp-btn" class="w-full mt-6 bg-warmaccent text-white py-3 rounded-xl font-bold shadow-lg hover:bg-warmhover transition-all">Get OTP</button>
+            </div>
+            <div id="otp-step" class="hidden-view">
+                <p class="text-sm text-gray-500 mb-4 text-center">OTP sent to <span id="display-phone" class="font-bold text-warmtext"></span></p>
+                <div class="flex justify-between gap-2 mb-4">
+                    <input type="text" class="otp-input w-12 h-14 text-center text-2xl font-bold border-2 border-warmborder rounded-xl focus:border-warmaccent outline-none bg-stone-50" maxlength="1">
+                    <input type="text" class="otp-input w-12 h-14 text-center text-2xl font-bold border-2 border-warmborder rounded-xl focus:border-warmaccent outline-none bg-stone-50" maxlength="1">
+                    <input type="text" class="otp-input w-12 h-14 text-center text-2xl font-bold border-2 border-warmborder rounded-xl focus:border-warmaccent outline-none bg-stone-50" maxlength="1">
+                    <input type="text" class="otp-input w-12 h-14 text-center text-2xl font-bold border-2 border-warmborder rounded-xl focus:border-warmaccent outline-none bg-stone-50" maxlength="1">
+                </div>
+                <div class="text-center mb-6 text-sm font-medium text-warmtext">
+                    <span id="timer-display" class="text-warmaccent font-bold">10s</span> until OTP expires
+                </div>
+                <p id="otp-error" class="text-red-500 text-sm mb-4 hidden text-center"><i class="fas fa-exclamation-circle mr-1"></i> Wrong OTP.</p>
+                <button id="verify-otp-btn" class="w-full bg-warmaccent text-white py-3 rounded-xl font-bold shadow-lg hover:bg-warmhover transition-all mb-3">Verify & Login</button>
+                <button id="resend-otp-btn" class="w-full bg-stone-200 text-stone-700 py-3 rounded-xl font-bold hover:bg-stone-300 transition-all hidden-view">Resend OTP</button>
+                <div id="console-otp-msg" class="text-xs text-center font-bold text-warmaccent mt-4 hidden-view">Check console (F12) for OTP</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROFILE MODAL -->
+    <div id="onboarding-modal" class="fixed inset-0 z-[60] flex items-center justify-center modal-overlay hidden-view">
+        <div class="bg-warmcard p-8 rounded-3xl shadow-2xl w-full max-w-md transform scale-95 opacity-0 transition-all duration-300 relative" id="onboarding-card">
+            <button id="close-profile-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 hidden"><i class="fas fa-times text-xl"></i></button>
+            <h2 class="text-2xl font-bold text-warmtext mb-6 text-center" id="profile-modal-title">Complete Your Profile</h2>
+            <div class="space-y-4">
+                
+                <div class="relative w-28 h-28 mx-auto mb-6">
+                    <div id="profile-pic-preview" class="w-28 h-28 rounded-full bg-stone-100 border-4 border-stone-200 shadow-inner flex items-center justify-center overflow-hidden relative">
+                        <i id="profile-pic-preview-icon" class="fas fa-user text-5xl text-stone-300 z-0"></i>
+                        <img id="profile-pic-preview-img" src="" class="profile-img-fit hidden">
+                    </div>
+                    <label for="profile-pic-upload" class="absolute bottom-0 right-0 w-8 h-8 bg-warmaccent text-white rounded-full flex items-center justify-center cursor-pointer border-2 border-white shadow-md hover:bg-warmhover z-20">
+                        <i class="fas fa-camera text-sm"></i>
+                    </label>
+                    <input type="file" id="profile-pic-upload" class="hidden" accept="image/*">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-warmtext mb-1">Your Name</label>
+                    <input type="text" id="user-name" class="w-full px-4 py-3 border-2 border-warmborder rounded-xl outline-none focus:border-warmaccent bg-stone-50" placeholder="e.g. Gayatri">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-warmtext mb-1">Age</label>
+                    <input type="number" id="user-age" max="100" class="w-full px-4 py-3 border-2 border-warmborder rounded-xl outline-none focus:border-warmaccent bg-stone-50" placeholder="21">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-warmtext mb-1">Interests</label>
+                    <input type="text" id="user-interest" class="w-full px-4 py-3 border-2 border-warmborder rounded-xl outline-none focus:border-warmaccent bg-stone-50" placeholder="Java, DBMS, OS, Python etc.">
+                </div>
+                <p id="form-error" class="text-red-500 text-sm hidden"><i class="fas fa-exclamation-circle mr-1"></i> Fill all fields.</p>
+                <button id="submit-profile-btn" class="w-full mt-4 bg-warmtext text-white py-3 rounded-xl font-bold shadow-lg hover:bg-black transition-all">Save Profile <i class="fas fa-arrow-right ml-2"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP DASHBOARD -->
+    <div id="main-app" class="hidden-view flex-1 flex flex-col h-screen overflow-hidden">
+        
+        <nav class="bg-warmcard h-20 px-6 flex items-center justify-between shadow-sm z-30 relative border-b border-warmborder">
+            <div class="flex items-center gap-4">
+                <button onclick="window.toggleSidebar()" class="text-2xl text-warmtext focus:outline-none hover:text-warmaccent transition-colors z-50 relative">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 via-purple-500 to-orange-500 p-[2px]">
+                    <div class="w-full h-full bg-white rounded-full flex items-center justify-center text-blue-600 text-lg relative overflow-hidden">
+                       <i class="fas fa-book-open relative z-10"><i class="fas fa-fire absolute -top-2.5 left-1/2 transform -translate-x-1/2 text-orange-500 text-[10px]"></i></i>
+                    </div>
+                </div>
+                <span class="text-2xl font-extrabold text-warmtext hidden sm:block">AI Tutor</span>
+            </div>
+            <div class="flex items-center gap-6 font-medium">
+                <div class="hidden sm:flex items-center gap-6">
+                    <a href="#" onclick="window.navigate('home')" class="text-warmaccent border-b-2 border-warmaccent pb-1">Home</a>
+                    <a href="#" onclick="window.scrollToSection('about-us-section')" class="text-gray-500 hover:text-warmtext">About Us</a>
+                    <a href="#" onclick="window.scrollToSection('help-section')" class="text-gray-500 hover:text-warmtext">Contact Us</a>
+                </div>
+                <button onclick="window.openProfileModal()" class="relative w-10 h-10 rounded-full bg-stone-100 border border-stone-200 flex items-center justify-center text-warmaccent hover:shadow-md transition-all group overflow-hidden nav-profile-pic">
+                    <i class="fas fa-user z-0 absolute"></i>
+                </button>
+            </div>
+        </nav>
+
+        <div class="flex flex-1 overflow-hidden relative">
+            <div id="sidebar-overlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden-view" onclick="window.toggleSidebar()"></div>
+
+            <aside id="sidebar" class="fixed inset-y-0 left-0 w-72 bg-warmcard border-r border-warmborder flex flex-col z-50 shadow-2xl transition-transform duration-300 transform -translate-x-full">
+                <div class="p-6 border-b border-warmborder flex flex-col items-center text-center pt-20">
+                    <div class="relative w-20 h-20 rounded-full bg-stone-100 border-4 border-white shadow-md flex items-center justify-center mb-3 group cursor-pointer overflow-hidden nav-profile-pic" onclick="window.openProfileModal()">
+                        <i class="fas fa-user text-3xl text-stone-300 z-0 absolute"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-warmtext leading-tight w-full truncate" id="display-name">User</h3>
+                    <p class="text-xs text-gray-500 uppercase tracking-wider font-bold mt-1">Student</p>
+                    
+                    <div id="sidebar-progress-container" class="mt-4 w-full bg-stone-50 rounded-xl p-3 border border-stone-100 hidden">
+                        <div class="flex justify-between text-xs font-bold text-gray-500 mb-1">
+                            <span class="truncate pr-2">Current: <span id="sidebar-current-subject" class="text-warmtext">None</span></span>
+                            <span id="sidebar-current-progress" class="text-warmaccent">0%</span>
+                        </div>
+                        <div class="w-full bg-stone-200 rounded-full h-1.5"><div id="sidebar-progress-bar" class="bg-warmaccent h-1.5 rounded-full transition-all" style="width: 0%"></div></div>
+                    </div>
+                </div>
+                <div class="flex-1 overflow-y-auto py-4 px-4 space-y-2">
+                    <button onclick="window.navigate('home'); window.toggleSidebar();" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-gray-600 hover:bg-stone-100 hover:text-warmtext transition-all font-medium nav-btn active" data-target="home"><i class="fas fa-home w-5 text-center"></i> Home View</button>
+                    <button onclick="window.navigate('subjects'); window.toggleSidebar();" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-gray-600 hover:bg-stone-100 hover:text-warmtext transition-all font-medium nav-btn" data-target="subjects"><i class="fas fa-book w-5 text-center"></i> All Subjects</button>
+                    <button onclick="window.navigate('learning'); window.toggleSidebar();" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-gray-600 hover:bg-stone-100 hover:text-warmtext transition-all font-medium nav-btn" data-target="learning"><i class="fas fa-history w-5 text-center"></i> Your Learning</button>
+                    <button onclick="window.navigate('analytics'); window.toggleSidebar();" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-gray-600 hover:bg-stone-100 hover:text-warmtext transition-all font-medium nav-btn" data-target="analytics"><i class="fas fa-chart-pie w-5 text-center"></i> Progress Analytics</button>
+                    <div class="h-px bg-stone-200 w-full my-4"></div>
+                    <button onclick="window.logoutUser()" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-red-500 hover:bg-red-50 transition-all font-medium nav-btn"><i class="fas fa-sign-out-alt w-5 text-center text-red-400"></i> Logout</button>
+                </div>
+                <div class="p-4 border-t border-warmborder">
+                    <button onclick="window.navigate('chat'); window.toggleSidebar();" class="w-full bg-warmtext text-white py-3 rounded-xl font-bold shadow-lg hover:bg-black transition-all flex items-center justify-center gap-2"><i class="fas fa-comment-dots"></i> AI Chat Bot</button>
+                </div>
+            </aside>
+
+            <main class="flex-1 overflow-y-auto bg-warmbg relative scroll-smooth" id="main-content-area">
+                
+                <!-- HOME VIEW -->
+                <div id="view-home" class="view-section min-h-full p-8">
+                    <p class="mb-6 text-gray-600 text-lg">Welcome to your central hub. Explore available full courses below.</p>
+                    <div class="relative overflow-hidden rounded-3xl h-96 bg-warmtext shadow-2xl mb-12">
+                        <div id="slider-container" class="flex h-full w-full slide-transition">
+                            <div class="min-w-full h-full flex flex-col justify-center items-center p-12 bg-gradient-to-br from-[#2c2825] to-[#4a443c] text-white relative overflow-hidden">
+                                <i class="fas fa-code absolute -right-10 -bottom-10 text-9xl opacity-10"></i>
+                                <h2 class="text-5xl font-extrabold mb-6 z-10 text-center">Full Course Library</h2>
+                                <!-- Fixed Clickable Subjects on Home Page -->
+                                <div class="flex flex-wrap justify-center gap-3 z-10 max-w-4xl">
+                                    <button onclick="window.openSubject('html')" class="px-5 py-2 bg-white/10 rounded-full font-medium cursor-pointer hover:bg-white/30 transition-all">Web Development</button>
+                                    <button onclick="window.openSubject('dbms')" class="px-5 py-2 bg-white/10 rounded-full font-medium cursor-pointer hover:bg-white/30 transition-all">DBMS</button>
+                                    <button onclick="window.openSubject('python')" class="px-5 py-2 bg-white/10 rounded-full font-medium cursor-pointer hover:bg-white/30 transition-all">Python</button>
+                                    <button onclick="window.openSubject('dsa')" class="px-5 py-2 bg-white/10 rounded-full font-medium cursor-pointer hover:bg-white/30 transition-all">DSA</button>
+                                    <button onclick="window.openSubject('java')" class="px-5 py-2 bg-white/10 rounded-full font-medium cursor-pointer hover:bg-white/30 transition-all">Java</button>
+                                    <button onclick="window.openSubject('javascript')" class="px-5 py-2 bg-white/10 rounded-full font-medium cursor-pointer hover:bg-white/30 transition-all">JavaScript</button>
+                                </div>
+                            </div>
+                            <div class="min-w-full h-full flex items-center justify-between p-12 bg-gradient-to-br from-warmaccent to-[#b85b3f] text-white relative">
+                                <div class="w-1/2">
+                                    <h2 class="text-4xl font-extrabold mb-2">Dashboard Panel</h2>
+                                    <p class="text-white/80 mb-6 text-lg">Your universe at a glance.</p>
+                                    <div class="bg-white/20 p-4 rounded-xl mb-4 flex justify-between"><span class="font-medium">Current Status</span><span id="home-status-progress" class="bg-white text-warmaccent px-3 py-1 rounded-full text-sm font-bold">0% Completed</span></div>
+                                    <div class="bg-white/20 p-4 rounded-xl flex justify-between"><span class="font-medium">My Subject</span><span id="home-status-subject" class="font-bold">None</span></div>
+                                </div>
+                                <div class="w-5/12 h-64 bg-white/10 rounded-2xl p-4">
+                                    <h4 class="text-sm font-bold mb-2">Daily Progress</h4>
+                                    <div class="chart-container h-48"><canvas id="miniProgressChart"></canvas></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="about-us-section" class="mt-20 pt-10 border-t border-warmborder">
+                        <h3 class="text-3xl font-bold text-warmtext mb-6">About Us</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="bg-warmcard p-8 rounded-3xl shadow-3d">
+                                <i class="fas fa-bullseye text-4xl text-warmaccent mb-4"></i>
+                                <h4 class="text-xl font-bold mb-3">Our Mission</h4>
+                                <p class="text-gray-600">To democratize complex technical education through intelligent, interactive, and personalized learning experiences tailored to every student's pace.</p>
+                            </div>
+                            <div class="bg-warmcard p-8 rounded-3xl shadow-3d">
+                                <i class="fas fa-lightbulb text-4xl text-warmaccent mb-4"></i>
+                                <h4 class="text-xl font-bold mb-3">The Platform</h4>
+                                <p class="text-gray-600">AI Tutor merges structured curriculum with dynamic AI assistance, transforming passive reading into active, testable knowledge acquisition.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="help-section" class="mt-20 pt-10 border-t border-warmborder mb-20">
+                        <h3 class="text-3xl font-bold text-warmtext mb-6">Help & Support</h3>
+                        <div class="bg-stone-100 p-8 rounded-3xl border border-warmborder flex items-start gap-6">
+                            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm shrink-0">
+                                <i class="fas fa-headset text-2xl text-warmtext"></i>
+                            </div>
+                            <div class="flex-1 text-center md:text-left">
+                                <h4 class="text-xl font-bold mb-2">Need Assistance?</h4>
+                                <p class="text-gray-600 mb-4">Our AI chatbot is available 24/7 for immediate subject-related queries. For technical issues, please contact platform support.</p>
+                                <button onclick="window.navigate('chat')" class="px-6 py-2 border-2 border-warmtext text-warmtext font-bold rounded-xl hover:bg-warmtext hover:text-white transition-all">Chat Now</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ALL SUBJECTS -->
+                <div id="view-subjects" class="view-section hidden-view min-h-full p-8">
+                    <h2 class="text-4xl font-extrabold text-warmtext mb-4">Full Course Library</h2>
+                    <p class="mb-8 text-gray-600 text-lg">Select a discipline to dive into comprehensive notes, practical Q&A, and 3 Quiz Modules per subject.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="library-cards-container"></div>
+                </div>
+
+                <!-- LEARNING VIEW -->
+                <div id="view-learning" class="view-section hidden-view min-h-full p-8">
+                    <h2 class="text-4xl font-extrabold text-warmtext mb-4">Your Learning Journey</h2>
+                    <p class="mb-8 text-gray-600 text-lg">Track your history and monitor completion rates across enrolled full courses.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="learning-cards-container"></div>
+                </div>
+
+                <!-- SPECIFIC SUBJECT VIEW -->
+                <div id="view-subject-detail" class="view-section hidden-view min-h-full bg-white relative">
+                    <div class="sticky top-0 bg-white/90 backdrop-blur border-b border-warmborder z-20 px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-sm">
+                        <div class="w-full sm:w-auto flex items-center gap-4">
+                            <button onclick="window.navigate('subjects')" class="w-10 h-10 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-gray-600"><i class="fas fa-arrow-left"></i></button>
+                            <h2 id="subject-detail-title" class="text-2xl font-extrabold text-warmtext">Subject Name</h2>
+                        </div>
+                        <div class="flex bg-stone-100 rounded-xl p-1 shadow-inner overflow-x-auto hide-scrollbar">
+                            <button onclick="window.switchTab('notes')" id="tab-notes" class="px-6 py-2 rounded-lg font-bold text-sm bg-white text-warmtext shadow-sm transition-all whitespace-nowrap">Full Notes</button>
+                            <button onclick="window.switchTab('qa')" id="tab-qa" class="px-6 py-2 rounded-lg font-bold text-sm text-gray-500 hover:text-warmtext transition-all whitespace-nowrap">Q&A Area</button>
+                            <button onclick="window.switchTab('quiz')" id="tab-quiz" class="px-6 py-2 rounded-lg font-bold text-sm text-gray-500 hover:text-warmtext transition-all whitespace-nowrap">Quiz Modules</button>
+                            <button onclick="window.switchTab('handwritten')" id="tab-handwritten" class="px-6 py-2 rounded-lg font-bold text-sm text-gray-500 hover:text-warmtext transition-all whitespace-nowrap hidden"><i class="fas fa-pen-nib mr-1"></i> Handwritten</button>
+                        </div>
+                    </div>
+
+                    <div class="p-8 max-w-5xl mx-auto">
+                        <div id="content-notes" class="subject-tab"></div>
+                        <div id="content-qa" class="subject-tab hidden-view"><p class="mb-6 text-gray-500 text-lg">Deeply analyzed answers to crucial questions.</p><div class="space-y-4" id="qa-container"></div></div>
+
+                        <div id="content-quiz" class="subject-tab hidden-view">
+                            <div class="bg-warmcard border border-warmborder rounded-3xl p-8 shadow-3d mb-8 text-center" id="quiz-intro">
+                                <i class="fas fa-trophy text-5xl text-yellow-500 mb-4"></i>
+                                <h3 id="quiz-title" class="text-3xl font-bold text-warmtext mb-2">Subject Mastery Quiz</h3>
+                                <p class="text-gray-600 mb-6 max-w-xl mx-auto">Assess your understanding with 3 distinct modules. Each quiz contains 10 unique questions (50 Marks).</p>
+                                <div class="flex justify-center gap-4 flex-wrap">
+                                    <button onclick="window.startQuiz(1)" class="px-8 py-3 bg-warmtext text-white font-bold rounded-xl shadow-md hover:bg-black transition-all">Quiz 1 (Q1-10)</button>
+                                    <button onclick="window.startQuiz(2)" class="px-8 py-3 bg-warmaccent text-white font-bold rounded-xl shadow-md hover:bg-warmhover transition-all">Quiz 2 (Q11-20)</button>
+                                    <button onclick="window.startQuiz(3)" class="px-8 py-3 bg-stone-500 text-white font-bold rounded-xl shadow-md hover:bg-stone-600 transition-all">Quiz 3 (Q21-30)</button>
+                                </div>
+                            </div>
+                            <div id="quiz-active" class="hidden-view max-w-3xl mx-auto">
+                                <div class="flex justify-between items-center mb-6">
+                                    <span class="font-bold text-gray-500" id="quiz-progress-text">Question 1 of 10</span>
+                                    <div class="w-64 bg-stone-200 rounded-full h-2"><div id="quiz-progress-bar" class="bg-warmaccent h-2 rounded-full transition-all" style="width: 10%"></div></div>
+                                </div>
+                                <div class="bg-white p-8 rounded-3xl border border-warmborder shadow-sm mb-6">
+                                    <h4 class="text-xl font-bold text-warmtext mb-6" id="quiz-question">Question text here?</h4>
+                                    <div class="space-y-3" id="quiz-options"></div>
+                                </div>
+                            </div>
+                            <div id="quiz-results" class="hidden-view text-center py-10 max-w-2xl mx-auto">
+                                <div id="result-icon" class="text-6xl mb-4"></div>
+                                <h3 class="text-4xl font-extrabold text-warmtext mb-2" id="result-score">Marks: 0 / 50</h3>
+                                <p class="text-xl font-medium text-gray-600 mb-6" id="result-message">Message</p>
+                                <div class="max-w-2xl mx-auto bg-stone-50 rounded-2xl p-6 text-left mb-8 border border-stone-200">
+                                    <h4 class="font-bold text-lg mb-4 text-red-500"><i class="fas fa-times-circle mr-2"></i>Review Mistakes</h4>
+                                    <div id="wrong-answers-list" class="space-y-4 text-sm max-h-64 overflow-y-auto pr-2"></div>
+                                </div>
+                                <button onclick="window.resetQuizView()" class="px-8 py-3 bg-warmaccent text-white font-bold rounded-xl shadow-lg hover:bg-warmhover transition-all"><i class="fas fa-arrow-left mr-2"></i> Back to Quizzes</button>
+                            </div>
+                        </div>
+
+                        <div id="content-handwritten" class="subject-tab hidden-view">
+                            <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                                <p class="text-gray-600 text-lg flex-1">Scanned handwritten notes processed by AI.</p>
+                                <a id="download-notes-btn" href="#" download class="px-6 py-3 bg-warmtext text-white font-bold rounded-xl shadow-md hover:bg-black transition-all flex items-center justify-center gap-2"><i class="fas fa-download"></i> Download</a>
+                            </div>
+                            <div class="bg-stone-50 p-2 rounded-2xl border border-warmborder shadow-inner">
+                                <embed id="pdf-viewer-iframe" src="" type="application/pdf" class="w-full h-[70vh] rounded-xl bg-white shadow-sm border border-stone-200">
+                            </div>
+                            <div id="no-notes-msg" class="hidden text-center py-20 bg-stone-50 rounded-2xl border border-dashed border-stone-300">
+                                <i class="fas fa-file-pdf text-6xl text-gray-300 mb-4"></i>
+                                <h3 class="text-2xl font-bold text-gray-500">No PDF Available</h3>
+                                <p class="text-gray-400 mt-2">Upload a PDF to your backend to process it here.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ANALYTICS -->
+                <div id="view-analytics" class="view-section hidden-view min-h-full p-8 max-w-7xl mx-auto">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 space-y-8">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="bg-warmcard p-6 rounded-2xl shadow-sm border border-warmborder text-center">
+                                    <i class="fas fa-book-open text-3xl text-stone-300 mb-2"></i>
+                                    <h4 class="text-sm text-gray-500 font-bold uppercase tracking-wider mb-1">Total Studied</h4>
+                                    <p class="text-3xl font-extrabold text-warmtext" id="stat-studied">0.0 <span class="text-lg text-gray-400 font-medium">hrs</span></p>
+                                </div>
+                                <div class="bg-warmcard p-6 rounded-2xl shadow-sm border border-warmborder text-center">
+                                    <i class="fas fa-hourglass-half text-3xl text-stone-300 mb-2"></i>
+                                    <h4 class="text-sm text-gray-500 font-bold uppercase tracking-wider mb-1">Total Left</h4>
+                                    <p class="text-3xl font-extrabold text-warmtext" id="stat-left">100 <span class="text-lg text-gray-400 font-medium">hrs</span></p>
+                                </div>
+                                <div class="bg-warmcard p-6 rounded-2xl shadow-sm border border-warmborder text-center">
+                                    <i class="fas fa-fire text-3xl text-warmaccent mb-2"></i>
+                                    <h4 class="text-sm text-gray-500 font-bold uppercase tracking-wider mb-1">Current Streak</h4>
+                                    <p class="text-3xl font-extrabold text-warmtext" id="stat-streak">0 <span class="text-lg text-gray-400 font-medium">days</span></p>
+                                </div>
+                            </div>
+                            <div class="bg-warmcard p-8 rounded-3xl border border-warmborder shadow-sm">
+                                <h3 class="text-xl font-bold text-warmtext mb-6">Daily Consistency Graph</h3>
+                                <div class="chart-container"><canvas id="mainAnalyticsChart"></canvas></div>
+                            </div>
+                        </div>
+
+                        <!-- BADGES/ACHIEVEMENTS -->
+                        <div class="bg-stone-50 p-6 rounded-3xl border border-warmborder h-fit">
+                            <h3 class="text-2xl font-bold text-warmtext mb-6 text-center">Achievements</h3>
+                            <div class="bg-white p-6 rounded-2xl border border-warmborder shadow-sm mb-6 text-center relative overflow-hidden">
+                                <div class="absolute top-0 right-0 w-16 h-16 bg-yellow-100 rounded-bl-full flex items-start justify-end p-3"><i class="fas fa-star text-yellow-500"></i></div>
+                                <div class="w-16 h-16 mx-auto bg-stone-100 rounded-full flex items-center justify-center text-warmaccent text-3xl mb-4 relative z-10 shadow-sm">
+                                    <i id="ach-header-icon" class="fas fa-star"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold mb-1 text-warmtext" id="ach-current-level-title">Bronze Level</h3>
+                                <p class="text-gray-500 mb-4 font-medium" id="ach-total-tasks">Total completed tasks: 0</p>
+                                <div class="flex justify-between text-xs font-bold text-gray-600 mb-1">
+                                    <span id="ach-level-start">Bronze</span><span id="ach-level-end">Silver (10 tasks)</span>
+                                </div>
+                                <div class="w-full bg-stone-100 rounded-full h-2">
+                                    <div id="ach-level-bar" class="bg-warmaccent h-2 rounded-full transition-all" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="space-y-3" id="achievements-list"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CHAT -->
+                <div id="view-chat" class="view-section hidden-view min-h-full flex flex-col h-[calc(100vh-5rem)]">
+                    <div class="p-6 border-b border-warmborder bg-white shrink-0">
+                        <p class="text-gray-600">Interact with the AI Tutor for guidance and examples.</p>
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-6 space-y-6 bg-stone-50" id="chat-messages">
+                        <div class="flex gap-4 max-w-3xl">
+                            <div class="w-10 h-10 bg-warmaccent rounded-full flex items-center justify-center text-white shrink-0"><i class="fas fa-robot"></i></div>
+                            <div class="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm border border-warmborder text-gray-700">
+                                Hello <span id="chat-name">Student</span>! I am your AI Tutor. What subject or topic would you like help with today?
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6 bg-white border-t border-warmborder shrink-0">
+                        <div class="max-w-4xl mx-auto relative">
+                            <input type="text" id="chat-input" class="w-full px-6 py-4 bg-stone-100 border-2 border-warmborder rounded-full outline-none focus:border-warmaccent bg-white transition-colors pr-16" placeholder="Type your message here...">
+                            <button id="send-chat-btn" class="absolute right-2 top-2 bottom-2 w-12 bg-warmtext text-white rounded-full flex items-center justify-center hover:bg-black transition-colors shadow-md">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- DATA, LOGIC & COMPRESSION ENGINE -->
+    <script>
+        const cMapQ = (arr) => arr.map(x => ({q: x[0], options: [x[1], x[2], x[3], x[4]], correct: x[5]}));
+        const cN = (chaps) => `<div class="space-y-6 text-gray-700">` + chaps.map((c,i) => `<div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm"><h3 class="text-2xl font-bold text-warmtext mb-3 border-b-2 border-warmaccent pb-2">${i+1}. ${c.t}</h3><p class="text-lg leading-relaxed">${c.c}</p></div>`).join('') + `</div>`;
+        const cQA = (arr) => arr.map(x => ({q: x[0], a: x[1]}));
+
+        const genQ = (sub) => {
+            let pool = [];
+            const types = ["Concept", "Application", "Theory"];
+            for(let i=0; i<30; i++) {
+                pool.push({
+                    q: `${sub} ${types[i%3]} Q${i+1}: Identify the correct characteristic from the following?`,
+                    options: ["Primary Feature", "Secondary Logic", "Core Method", "Standard Protocol"],
+                    correct: Math.floor(Math.random() * 4)
+                });
+            }
+            return pool;
+        };
+
+        const subjectData = {
+            python: {
+                title: "Python", icon: "fab fa-python",
+                notes: cN([
+                    {t:"Basics & Syntax", c:"Python is dynamically typed, interpreted, and uses indentation for block scope. Built-in types: int, float, complex, bool, str."},
+                    {t:"Data Structures", c:"<b>Lists []:</b> Mutable, ordered collection. <b>Tuples ():</b> Immutable, ordered (faster). <b>Sets {}:</b> Unique items, supports union/intersection. <b>Dicts {k:v}:</b> Key-Value mapping."},
+                    {t:"Functions", c:"Defined using <code>def</code>. Lambdas are inline anonymous functions. <code>*args</code> handles variable positional arguments, <code>**kwargs</code> handles keyword arguments."},
+                    {t:"OOP", c:"Classes encapsulate data and behavior. <code>__init__</code> acts as the constructor. Supports Inheritance and Encapsulation (via double underscores)."},
+                    {t:"Advanced", c:"<b>Generators:</b> Use <code>yield</code> to return an iterator that generates values on the fly (saves memory). <b>Decorators:</b> Modify function behavior."}
+                ]),
+                qa: cQA([
+                    ["[Easy] What is PEP 8?", "Official style guide for Python code formatting."],
+                    ["[Medium] List vs Tuple?", "Lists are mutable ([]). Tuples are immutable ()."],
+                    ["[Hard] What is the GIL?", "Global Interpreter Lock prevents multiple native threads from executing Python bytecodes simultaneously."],
+                    ["[Hard] Decorator vs Generator?", "Decorator modifies function behavior. Generator uses 'yield' to save memory while iterating."]
+                ]),
+                quiz: cMapQ([
+                    ["Immutable data type?","List","Dict","Set","Tuple",3], ["Start a function?","def","function","fun()","create",0], ["Output of 2 ** 3?","6","8","9","12",1],
+                    ["Symbol for comments?","//","/ *","#","--",2], ["Python extension?",".pt",".py",".pyt",".java",1], ["Add to a list?","add()","push()","insert()","append()",3],
+                    ["Who created Python?","Dennis Ritchie","James Gosling","Guido van Rossum","Bjarne Stroustrup",2], ["Unique elements collection?","List","Tuple","Set","Dict",2], ["Length of list L?","L.length()","length(L)","len(L)","size(L)",2],
+                    ["Is Python compiled or interpreted?","Compiled","Interpreted","Both","None",1], ["What is a lambda function?","Multi-line","Anonymous single-line","Class method","Recursive",1], ["Key-Value pair collection?","List","Set","Tuple","Dictionary",3],
+                    ["Keyword for exceptions?","try","catch","except","A and C",3], ["What does pip stand for?","Pip Installs Packages","Python Install Package","Python Index","None",0], ["Output of print(type([]))?","<class 'list'>","<class 'array'>","list","array",0],
+                    ["Instantiate a class?","new Class()","Class()","create Class()","Class.new()",1], ["Keyword returning generator?","return","yield","stop","send",1], ["Inherit a class syntax?","class extends","class A(B):","class implements","class ->",1],
+                    ["Import a module?","include math","import math","using math","require math",1], ["What is __init__?","Variable","Module","Constructor method","Array",2], ["What does pass do?","Exits program","Placeholder (does nothing)","Throws error","Skips loop",1],
+                    ["Function for user input?","get()","scan()","input()","read()",2], ["Boolean 'both true'?","or","not","and","&&",2], ["Is Python case sensitive?","Yes","No","Only in classes","Sometimes",0],
+                    ["Used for Data Analysis?","Django","Flask","Pandas","Requests",2], ["What does break do?","Pauses loop","Exits loop entirely","Skips iteration","Restarts",1], ["Output of 5 // 2?","2.5","2","3","Error",1],
+                    ["Open file for reading?","open('f', 'r')","open('f', 'w')","read('f')","file('f')",0], ["NOT a core data type?","List","Dictionary","Class","Tuple",2], ["What does strip() do?","Removes spaces","Splits string","Joins string","Reverses",0]
+                ]),
+                handwrittenPdfUrl: "python notes.pdf" //URL for handwritten notes
+            },
+            dbms: {
+                title: "DBMS", icon: "fas fa-database",
+                notes: cN([
+                    {t:"Architecture", c:"Provides an interface between users and database. Solves file system redundancy."},
+                    {t:"ER Model", c:"Entity (Rectangle), Attribute (Ellipse), Relationship (Diamond)."},
+                    {t:"Normalization", c:"1NF to BCNF removes insertion, deletion, and update anomalies."},
+                    {t:"ACID", c:"Atomicity (All or nothing), Consistency, Isolation, Durability. Ensures secure transactions."},
+                    {t:"Indexing", c:"B-Tree vs B+ Tree. B+ tree stores data only at leaves for extremely fast sequential access."}
+                ]),
+                qa: cQA([
+                    ["[Easy] Primary Key?", "A column uniquely identifying a row. Cannot be NULL."],
+                    ["[Medium] TRUNCATE vs DELETE?", "DELETE is DML (removes rows, rollback possible). TRUNCATE is DDL (wipes all rows fast, no rollback)."],
+                    ["[Hard] Explain ACID.", "Atomicity (All or nothing), Consistency, Isolation, Durability."],
+                    ["[Hard] B-Tree vs B+ Tree?", "B+ Tree stores data ONLY at leaf nodes, making range queries much faster."]
+                ]),
+                quiz: cMapQ([
+                    ["NOT an ACID property?","Atomicity","Consistency","Isolation","Inconsistency",3], ["Command to remove table?","DELETE","DROP","TRUNCATE","REMOVE",1], ["Removes transitive dependency?","1NF","2NF","3NF","BCNF",2],
+                    ["ER Entity shape?","Diamond","Rectangle","Ellipse","Line",1], ["Key for referential integrity?","Primary","Super","Foreign","Candidate",2], ["Abstraction hiding physical storage?","Logical","View","Physical","Conceptual",2],
+                    ["Constraint for unique values?","UNIQUE","NOT NULL","CHECK","DEFAULT",0], ["DML stands for?","Data Manipulation Lang","Data Mapped Lang","Data Meta Lang","None",0], ["SQL full form?","Simple Query Lang","Structured Query Lang","Standard Query Lang","None",1],
+                    ["What is a tuple?","Column","Row","Table","Database",1], ["Data redundancy is?","Data hiding","Data duplication","Data security","Data recovery",1], ["Normal form for atomic values?","1NF","2NF","3NF","BCNF",0],
+                    ["Which is a TCL command?","SELECT","INSERT","COMMIT","GRANT",2], ["Prevents deadlock?","Banker's Algorithm","SJF","Round Robin","FCFS",0], ["Virtual table is called?","Index","Trigger","View","Cursor",2],
+                    ["Join returning all matching rows?","LEFT","RIGHT","INNER","FULL",2], ["Clause to filter groups?","WHERE","ORDER BY","HAVING","GROUP BY",2], ["Atomicity means?","Concurrency","All or nothing","Permanence","None",1],
+                    ["Improves search speed?","Trigger","Index","View","Cursor",1], ["Primary key of multiple columns?","Super key","Candidate key","Composite key","Foreign key",2], ["Relationship student to courses?","1:1","1:M","M:N","None",2],
+                    ["Multi-valued attribute shape?","Rectangle","Double Ellipse","Diamond","Dashed Ellipse",1], ["What happens in ROLLBACK?","Saves data","Reverts to last commit","Deletes table","Creates backup",1], ["Which is NoSQL?","MySQL","Oracle","MongoDB","PostgreSQL",2],
+                    ["Property for surviving crashes?","Atomicity","Consistency","Isolation","Durability",3], ["Anomaly in DBMS is?","A feature","Structural flaw/error","A key","A backup",1], ["Most restrictive Normal Form?","1NF","2NF","3NF","BCNF",3],
+                    ["Command modifying structure?","UPDATE","ALTER","CHANGE","MODIFY",1], ["What is DDL?","Data Def Lang","Data Del Lang","Data Drop Lang","None",0], ["What is a trigger?","Manual query","Auto executing procedure","Primary key","Index",1]
+                ]),
+                handwrittenPdfUrl: "DBMS Handwritten Notes!.pdf"
+            },
+            dsa: {
+                title: "DSA", icon: "fas fa-network-wired",
+                notes: cN([
+                    {t:"Complexity", c:"Big O Notation: O(1) < O(log N) < O(N) < O(N log N) < O(N^2)."},
+                    {t:"Linear", c:"<b>Array:</b> Fast read O(1). <b>Linked List:</b> Dynamic memory. <b>Stack:</b> LIFO. <b>Queue:</b> FIFO."},
+                    {t:"Trees", c:"<b>BST:</b> O(log N) search. AVL is self-balancing."},
+                    {t:"DP", c:"Optimizing problems by caching overlapping subproblems (Memoization)."}
+                ]),
+                qa: cQA([
+                    ["[Easy] Stack vs Queue?", "Stack follows LIFO. Queue follows FIFO."],
+                    ["[Hard] Dijkstra vs Bellman-Ford?", "Dijkstra (Greedy) fails on negative weights. Bellman-Ford (DP) handles negative weights."]
+                ]),
+                quiz: cMapQ([
+                    ["LIFO structure?","Queue","Array","Stack","Tree",2], ["Binary Search time?","O(N)","O(log N)","O(1)","O(N^2)",1], ["Traversal using Queue?","DFS","BFS","Inorder","Postorder",1], ["QuickSort worst case?","O(N log N)","O(N)","O(N^2)","O(log N)",2],
+                    ["Structure for recursion?","Queue","Stack","Graph","Hash Table",1], ["Divide and conquer sort?","Bubble","Merge","Insertion","Selection",1], ["What is BST?","Basic Search Tree","Binary Search Tree","Binary Simple Tree","None",1],
+                    ["Hash Table avg search?","O(N)","O(log N)","O(1)","O(N^2)",2], ["Resolves Hash Collisions?","Chaining","Recursion","Sorting","Pointers",0], ["NOT a linear structure?","Array","Stack","Queue","Tree",3],
+                    ["What is an AVL Tree?","A graph","Self-balancing BST","A queue","A hash map",1], ["Binary Tree max children?","Any","Max 1","Max 2","Max 3",2], ["Always O(N log N) sort?","Quick","Merge","Bubble","Selection",1],
+                    ["Implements Dijkstra's?","Stack","Priority Queue","Hash Map","Linked List",1], ["DFS internal structure?","Queue","Stack","Array","Tree",1], ["Array index access time?","O(N)","O(1)","O(log N)","O(N^2)",1],
+                    ["Preorder traversal?","Left-Root-Right","Root-Left-Right","Left-Right-Root","None",1], ["DP relies on?","Greedy choices","Overlapping subproblems","Sorting","Hashing",1], ["Handles negative edge weights?","Dijkstra","Prim","Kruskal","Bellman-Ford",3],
+                    ["What is Memoization?","Sorting","Caching DP results","Hashing","Deleting",1], ["Minimum spanning tree algo?","Kruskal","Dijkstra","BFS","DFS",0], ["In-place sort?","Merge","Quick","Counting","Radix",1],
+                    ["Structure for Undo?","Queue","Stack","Tree","Graph",1], ["Structure for Printer Spooler?","Queue","Stack","Tree","Graph",0], ["Complete binary tree?","All levels filled except last","All nodes 2 children","Left skewed","Right skewed",0],
+                    ["Max heap property?","Root is smallest","Root is largest","Leaves largest","None",1], ["Search needing sorted data?","Linear","Binary","DFS","BFS",1], ["Merge Sort space complexity?","O(1)","O(log N)","O(N)","O(N^2)",2],
+                    ["Graph with no cycles?","DAG","Complete","Bipartite","Dense",0], ["Adjacency Matrix space?","O(V+E)","O(V^2)","O(E)","O(V)",1]
+                ]), handwrittenPdfUrl: "DSA Notes  (1).pdf"
+            },
+            java: {
+                title: "Java", icon: "fab fa-java",
+                notes: cN([
+                    {t:"Architecture", c:"<b>JDK:</b> Dev kit. <b>JRE:</b> Runtime. <b>JVM:</b> Virtual Machine (Bytecode executor)."},
+                    {t:"OOP", c:"Encapsulation, Inheritance, Polymorphism, Abstraction."},
+                    {t:"Memory", c:"Objects live in <b>Heap</b>. Methods in <b>Stack</b>. Strings in String Pool."},
+                    {t:"Collections", c:"List (Ordered), Set (Unique), Map (Key-Value)."}
+                ]),
+                qa: cQA([
+                    ["[Medium] Overloading vs Overriding?", "Overloading: Compile-time. Overriding: Run-time in child class."],
+                    ["[Hard] HashMap internal working?", "Array of buckets. Resolves collisions using a LinkedList."]
+                ]),
+                quiz: cMapQ([
+                    ["Size of int?","8 bit","16 bit","32 bit","64 bit",2], ["Superclass of all?","Class","Object","Super","Main",1], ["Prevent inheritance keyword?","static","final","abstract","private",1], ["Always executed block?","try","catch","finally","throw",2],
+                    ["Key-Value collection?","List","Set","Map","Queue",2], ["NOT an OOP principle?","Inheritance","Polymorphism","Compilation","Encapsulation",2], ["Execution start method?","start()","init()","main()","run()",2], ["Are strings mutable?","Yes","No","Sometimes","Depends",1],
+                    ["Creates object?","new","create","alloc","obj()",0], ["Developer of Java?","Microsoft","Apple","Sun Microsystems","Google",2], ["Stores objects?","Stack","Heap","Registers","Cache",1], ["Allows multiple inheritance?","Classes","Abstract Classes","Interfaces","None",2],
+                    ["JVM stands for?","Java Variable Machine","Java Virtual Machine","Java Visual Machine","None",1], ["Call parent constructor?","parent()","super()","this()","base()",1], ["Unchecked exception?","IOException","SQLException","NullPointerException","ClassNotFound",2],
+                    ["Best for random access?","LinkedList","ArrayList","Vector","Stack",1], ["Method overriding annotation?","@Override","overrides","super","extends",0], ["Default boolean value?","true","false","null","0",1], ["Garbage collection is?","Deleting code","Auto memory cleanup","Error handling","Compiling",1],
+                    ["Thread-safe string class?","StringBuilder","StringBuffer","String","None",1], ["Instantiate abstract class?","Yes","No","Via interface","Depends",1], ["Most restrictive modifier?","public","protected","default","private",3], ["What is 'this'?","Parent ref","Current object ref","Static variable","None",1],
+                    ["== vs .equals()?","Same thing","== checks ref, equals checks value","== checks value, equals checks ref","None",1], ["Sorted Set?","HashSet","LinkedHashSet","TreeSet","None",2], ["Throws exception manually?","throws","throw","catch","finally",1],
+                    ["Final method means?","Cannot overload","Cannot override","Cannot call","Returns final",1], ["Interface methods default?","private","protected","public abstract","static",2], ["Array size dynamic?","Yes","No","Only int","Depends",1], ["Wrapper class is?","Primitive object","UI class","File class","None",0]
+                ]), handwrittenPdfUrl:"OOP concepts in java  (1).pdf"
+            },
+            javascript: {
+                title: "JavaScript", icon: "fab fa-js",
+                notes: cN([
+                    {t:"Scope", c:"<code>var</code> is function-scoped (hoisted). <code>let/const</code> are block-scoped."},
+                    {t:"Closures", c:"Inner functions retain access to outer function's scope variables."},
+                    {t:"Event Loop", c:"Call Stack -> Web APIs -> Microtask Queue (Promises) -> Macrotask Queue."}
+                ]),
+                qa: cQA([
+                    ["[Easy] == vs ===?", "== coerces types. === strictly compares type and value."],
+                    ["[Hard] Event Loop?", "Executes Call Stack, then empties Microtasks, then Macrotasks."]
+                ]),
+                quiz: genQ("JavaScript"), handwrittenPdfUrl: "JavaScript Handwritten Notes.pdf"
+            },
+            c: {
+                title: "C Prog", icon: "fas fa-c",
+                notes: cN([{t:"Compilation",c:"Preprocessing -> Compilation -> Assembly -> Linking."},{t:"Memory",c:"Pointers, malloc, calloc, free."}]),
+                qa: cQA([["[Easy] Pointer?", "Variable storing memory address."]]), quiz: genQ("C"), handwrittenPdfUrl: "C Handwritten Notes.pdf"
+            },
+            sql: {
+                title: "SQL", icon: "fas fa-table",
+                notes: cN([{t:"Commands",c:"DDL, DML, DQL."},{t:"Joins",c:"INNER, LEFT, RIGHT, FULL."}]),
+                qa: cQA([["[Medium] WHERE vs HAVING?", "WHERE filters rows, HAVING filters groups."]]), quiz: genQ("SQL"), handwrittenPdfUrl: "SQL Handwritten Notes .pdf"
+            },
+            html: {
+                title: "HTML", icon: "fab fa-html5",
+                notes: cN([{t:"Tags",c:"Semantic HTML5 tags like article, main improve SEO."}]),
+                qa: cQA([["[Easy] div vs span?", "Block vs Inline."]]), quiz: genQ("HTML"), handwrittenPdfUrl: "HTML Handwritten Notes.pdf"
+            },
+            css: {
+                title: "CSS", icon: "fab fa-css3-alt",
+                notes: cN([{t:"Layouts",c:"Flexbox (1D), Grid (2D), Box Model."}]),
+                qa: cQA([["[Medium] Specificity?", "Inline > ID > Class > Element."]]), quiz: genQ("CSS"), handwrittenPdfUrl: "Web Development 45 Days Learning Plan.pdf"
+            },
+            os: {
+                title: "OS", icon: "fas fa-microchip",
+                notes: cN([{t:"Processes",c:"Process vs Thread, CPU Scheduling, Deadlocks."}]),
+                qa: cQA([["[Hard] Banker's Algorithm?", "Deadlock avoidance algorithm."]]), quiz: genQ("OS"), handwrittenPdfUrl: "Operating System Handwritten Notes .pdf"
+            }
+        };
+
+        // --- Global State & Progress Logic ---
+        window.state = {
+            isLoggedIn: false, user: { name: '', age: '', interest: '', photo: '' },
+            currentSlide: 0, quizScore: 0, quizActive: false, currentQuestion: 0, wrongAnswers: [],
+            chatHistory: [], currentSubject: 'python', currentQuizPool: [], expectedOtp: ''
+        };
+
+        window.progressData = JSON.parse(localStorage.getItem('aiTutorProgressFinalV6')) || { activities: {}, dailyStats: {}, streak: 0, lastActiveDate: null, totalTasks: 0 };
+        if (!window.progressData.activities) window.progressData.activities = {};
+        if (!window.progressData.dailyStats) window.progressData.dailyStats = {};
+        if (!window.progressData.totalTasks) window.progressData.totalTasks = 0;
+
+        window.getLocalISODate = function(dateObj) {
+            const d = dateObj ? new Date(dateObj) : new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().split('T')[0];
+        };
+
+        window.saveProgress = function() {
+            localStorage.setItem('aiTutorProgressFinalV6', JSON.stringify(window.progressData));
+            localStorage.setItem('aiTutorUserFinalV6', JSON.stringify(window.state.user));
+        };
+
+        window.updateProfilePicUI = function() {
+            if(window.state.user.photo) {
+                document.querySelectorAll('.nav-profile-pic').forEach(el => {
+                    const icon = el.querySelector('i.fa-user');
+                    if(icon) icon.classList.add('hidden');
+                    
+                    let img = el.querySelector('img');
+                    if(!img) {
+                        img = document.createElement('img');
+                        img.className = "profile-img-fit z-0";
+                        el.appendChild(img);
+                    }
+                    img.src = window.state.user.photo;
+                    
+                    let overlay = el.querySelector('.bg-black\\/40');
+                    if(!overlay) {
+                        overlay = document.createElement('div');
+                        overlay.className = "absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10";
+                        overlay.innerHTML = `<i class="fas fa-pencil-alt text-white"></i>`;
+                        el.appendChild(overlay);
+                    }
+                });
+                const preview = document.getElementById('profile-pic-preview');
+                if(preview) {
+                    const icon = preview.querySelector('i.fa-user');
+                    if(icon) icon.classList.add('hidden');
+                    let img = preview.querySelector('img');
+                    if(!img) {
+                        img = document.createElement('img');
+                        img.className = "profile-img-fit z-0";
+                        preview.appendChild(img);
+                    }
+                    img.src = window.state.user.photo;
+                }
+            }
+        };
+
+        window.markActivityCompleted = function(subject, activity, score = null) {
+            if (!window.progressData.activities[subject]) window.progressData.activities[subject] = { opened: false, notes: false, qa: false, hw: false, quizScore: 0 };
+            const today = window.getLocalISODate();
+            if (!window.progressData.dailyStats[today]) window.progressData.dailyStats[today] = { hours: 0, quizScoreAvg: 0, quizCount: 0 };
+
+            if (window.progressData.lastActiveDate !== today) {
+                if (window.progressData.lastActiveDate) {
+                    const diffDays = Math.ceil(Math.abs(new Date(today) - new Date(window.progressData.lastActiveDate)) / (1000 * 60 * 60 * 24)); 
+                    if (diffDays === 1) window.progressData.streak += 1; else if (diffDays > 1) window.progressData.streak = 1;
+                } else window.progressData.streak = 1;
+                window.progressData.lastActiveDate = today;
+            }
+
+            let addedHours = 0; let p = window.progressData.activities[subject];
+            if (activity === 'quiz') {
+                if(!p['quiz_' + today]) { p['quiz_' + today] = true; addedHours += 0.5; window.progressData.totalTasks += 1; }
+                p.quizScore = Math.max(p.quizScore, score);
+                window.progressData.dailyStats[today].quizCount++;
+                let currentAvg = window.progressData.dailyStats[today].quizScoreAvg, count = window.progressData.dailyStats[today].quizCount;
+                window.progressData.dailyStats[today].quizScoreAvg = ((currentAvg * (count - 1)) + score) / count;
+            } else {
+                if (!p[activity + '_' + today]) {
+                    p[activity + '_' + today] = true;
+                    window.progressData.totalTasks += 1;
+                    if (activity === 'opened') addedHours = 0.2; if (activity === 'notes') addedHours = 1.0; if (activity === 'qa') addedHours = 0.5;
+                    p[activity] = true;
+                }
+            }
+
+            window.progressData.dailyStats[today].hours += addedHours; window.progressData.currentSubject = subject;
+            window.saveProgress(); window.refreshProgressUI(); window.updateAnalyticsStats();
+            if (document.getElementById('view-analytics') && !document.getElementById('view-analytics').classList.contains('hidden-view')) window.renderAnalyticsChart();
+        };
+
+        window.calculateSubjectProgress = function(sub) {
+            let p = window.progressData.activities[sub]; if (!p) return 0;
+            let total = (p.opened?10:0) + (p.notes?20:0) + (p.qa?20:0) + (p.hw?10:0) + ((p.quizScore/50)*40); 
+            return Math.min(100, Math.round(total));
+        };
+
+        window.refreshProgressUI = function() {
+            if (!window.progressData.currentSubject || !subjectData[window.progressData.currentSubject]) return;
+            let cSub = window.progressData.currentSubject; let prog = window.calculateSubjectProgress(cSub);
+            
+            ['sidebar-current-subject','home-status-subject'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).textContent = subjectData[cSub].title; });
+            ['sidebar-current-progress'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).textContent = prog + '%'; });
+            if(document.getElementById('home-status-progress')) document.getElementById('home-status-progress').textContent = prog + '% Completed';
+            ['sidebar-progress-bar','home-progress-bar'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).style.width = prog + '%'; });
+            
+            Object.keys(subjectData).forEach(key => {
+                let p = window.calculateSubjectProgress(key);
+                if(document.getElementById(`prog-bar-learning-${key}`)) document.getElementById(`prog-bar-learning-${key}`).style.width = p + '%';
+                if(document.getElementById(`prog-text-learning-${key}`)) document.getElementById(`prog-text-learning-${key}`).textContent = p + '%';
+            });
+            window.renderMiniChart();
+        };
+
+        window.updateAnalyticsStats = function() {
+            let totalStudied = Object.values(window.progressData.dailyStats).reduce((sum, day) => sum + (day.hours || 0), 0);
+            let totalLeft = Math.max(0, (Object.keys(subjectData).length * 5) - totalStudied);
+            
+            document.getElementById('stat-studied').innerHTML = `${totalStudied.toFixed(1)} <span class="text-base text-gray-400 font-medium">hrs</span>`;
+            document.getElementById('stat-left').innerHTML = `${totalLeft.toFixed(1)} <span class="text-base text-gray-400 font-medium">hrs</span>`;
+            document.getElementById('stat-streak').innerHTML = `${window.progressData.streak} <span class="text-base text-gray-400 font-medium">days</span>`;
+            window.renderAchievements();
+        };
+
+        const achievementTiers = [
+            { name: "Bronze", req: 0, icon: "fas fa-star", iconBg: "bg-yellow-100", iconCol: "text-yellow-600", barCol: "bg-orange-400" },
+            { name: "Silver", req: 10, icon: "fas fa-shield-alt", iconBg: "bg-stone-200", iconCol: "text-stone-500", barCol: "bg-stone-400" },
+            { name: "Gold", req: 50, icon: "fas fa-trophy", iconBg: "bg-yellow-50", iconCol: "text-yellow-500", barCol: "bg-yellow-400" },
+            { name: "Platinum", req: 100, icon: "fas fa-crown", iconBg: "bg-teal-50", iconCol: "text-teal-500", barCol: "bg-teal-400" },
+            { name: "Diamond", req: 500, icon: "fas fa-gem", iconBg: "bg-blue-50", iconCol: "text-blue-500", barCol: "bg-blue-400" }
+        ];
+
+        window.renderAchievements = function() {
+            const tasks = window.progressData.totalTasks || 0;
+            const listEl = document.getElementById('achievements-list');
+            if(!listEl) return;
+            listEl.innerHTML = '';
+            
+            let currentTierIdx = 0;
+            for(let i = 0; i < achievementTiers.length; i++) {
+                if(tasks >= achievementTiers[i].req) currentTierIdx = i;
+            }
+            
+            const currentTier = achievementTiers[currentTierIdx];
+            const nextTier = currentTierIdx < achievementTiers.length - 1 ? achievementTiers[currentTierIdx + 1] : currentTier;
+
+            document.getElementById('ach-current-level-title').textContent = `${currentTier.name} Level`;
+            document.getElementById('ach-total-tasks').textContent = `Total completed tasks: ${tasks}`;
+            document.getElementById('ach-header-icon').className = currentTier.icon;
+            
+            document.getElementById('ach-level-start').textContent = currentTier.name;
+            document.getElementById('ach-level-end').textContent = nextTier.name === currentTier.name ? "Max Level" : `${nextTier.name} (${nextTier.req} tasks)`;
+            
+            let progressPercent = 100;
+            if(nextTier.req > currentTier.req) {
+                progressPercent = ((tasks - currentTier.req) / (nextTier.req - currentTier.req)) * 100;
+            }
+            
+            const bar = document.getElementById('ach-level-bar');
+            bar.style.width = `${progressPercent}%`;
+            bar.className = `${currentTier.barCol} h-2 rounded-full transition-all duration-1000`;
+
+            achievementTiers.forEach((tier) => {
+                const isUnlocked = tasks >= tier.req;
+                const statusHtml = isUnlocked ? `<div class="text-green-500 font-bold text-sm flex items-center gap-1"><i class="fas fa-circle text-[8px]"></i> Unlocked</div>` : ``;
+                const opacityClass = isUnlocked ? "" : "opacity-40 grayscale";
+                
+                listEl.innerHTML += `
+                    <div class="bg-white border border-stone-200 rounded-2xl p-4 flex items-center gap-4 ${opacityClass} shadow-sm">
+                        <div class="w-14 h-14 rounded-xl ${tier.iconBg} ${tier.iconCol} flex items-center justify-center text-2xl"><i class="${tier.icon}"></i></div>
+                        <div><h4 class="font-bold text-lg text-warmtext">${tier.name}</h4><p class="text-sm text-gray-500">Requires ${tier.req} tasks</p></div>
+                        <div class="ml-auto">${statusHtml}</div>
+                    </div>
+                `;
+            });
+        };
+
+        window.logoutUser = function() {
+            if(confirm("Are you sure you want to logout?")) { localStorage.removeItem('aiTutorUserFinalV6'); localStorage.removeItem('aiTutorProgressFinalV6'); location.reload(); }
+        };
+
+        window.navigate = function(viewId) {
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.add('hidden-view'));
+            const target = document.getElementById('view-' + viewId); if(target) target.classList.remove('hidden-view');
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if(btn.dataset.target === viewId) btn.classList.add('bg-stone-100', 'text-warmtext', 'border-l-4', 'border-warmaccent');
+                else btn.classList.remove('bg-stone-100', 'text-warmtext', 'border-l-4', 'border-warmaccent');
+            });
+            if(viewId === 'analytics') window.renderAnalyticsChart();
+            if (window.innerWidth < 768 && !document.getElementById('sidebar').classList.contains('-translate-x-full')) {
+                window.toggleSidebar();
+            }
+        };
+
+        window.scrollToSection = function(id) {
+            window.navigate('home');
+            setTimeout(() => {
+                const el = document.getElementById(id);
+                if(el) el.scrollIntoView({behavior: 'smooth'});
+            }, 100);
+        };
+
+        window.toggleSidebar = function() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden-view');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden-view');
+            }
+        };
+
+        window.openProfileModal = function() {
+            document.getElementById('user-name').value = window.state.user.name; document.getElementById('user-age').value = window.state.user.age; document.getElementById('user-interest').value = window.state.user.interest;
+            document.getElementById('close-profile-btn').classList.remove('hidden'); document.getElementById('onboarding-modal').classList.remove('hidden-view');
+            setTimeout(() => { document.getElementById('onboarding-card').classList.remove('scale-95', 'opacity-0'); }, 10);
+        };
+
+        window.renderSubjectLibrary = function() {
+            const container = document.getElementById('library-cards-container'); container.innerHTML = '';
+            Object.keys(subjectData).forEach(key => {
+                const data = subjectData[key];
+                container.innerHTML += `
+                    <div onclick="window.openSubject('${key}')" class="bg-warmcard p-6 rounded-3xl shadow-sm border border-warmborder hover:shadow-3d hover:-translate-y-2 transition-all cursor-pointer group flex flex-col min-h-[220px]">
+                        <div class="w-14 h-14 bg-stone-100 rounded-2xl flex items-center justify-center text-warmaccent text-2xl mb-4 border border-stone-200"><i class="${data.icon}"></i></div>
+                        <h3 class="text-2xl font-bold text-warmtext mb-2 mt-auto">${data.title}</h3><p class="text-sm text-gray-500 font-medium">Full Course</p>
+                    </div>`;
+            });
+        };
+
+        window.renderLearningCards = function() {
+            const container = document.getElementById('learning-cards-container'); container.innerHTML = '';
+            Object.keys(subjectData).forEach(key => {
+                const data = subjectData[key];
+                container.innerHTML += `
+                    <div class="bg-warmcard rounded-3xl border border-warmborder overflow-hidden shadow-sm hover:shadow-md">
+                        <div class="p-6 border-b border-warmborder flex justify-between items-center bg-stone-50">
+                            <div class="flex items-center gap-5"><div class="w-14 h-14 bg-white rounded-2xl border border-stone-200 flex items-center justify-center text-warmaccent text-2xl"><i class="${data.icon}"></i></div>
+                                <div><h3 class="font-bold text-xl text-warmtext">${data.title}</h3><p class="text-sm font-medium text-gray-500">Track progress</p></div>
+                            </div>
+                            <button onclick="window.openSubject('${key}')" class="w-12 h-12 bg-warmaccent text-white rounded-full font-bold shadow-md hover:bg-warmhover flex justify-center items-center hover:scale-105 transition-transform"><i class="fas fa-play ml-1"></i></button>
+                        </div>
+                        <div class="p-6 bg-white">
+                            <div class="flex justify-between text-sm font-bold text-gray-600 mb-3"><span>Course Completion</span><span id="prog-text-learning-${key}" class="text-warmaccent text-xl font-extrabold">0%</span></div>
+                            <div class="w-full bg-stone-100 rounded-full h-3 shadow-inner overflow-hidden"><div id="prog-bar-learning-${key}" class="bg-gradient-to-r from-warmaccent to-yellow-500 h-3 rounded-full transition-all duration-700" style="width: 0%"></div></div>
+                        </div>
+                    </div>`;
+            });
+        };
+
+        window.openSubject = async function(subjectCode) {
+            window.state.currentSubject = subjectCode; const data = subjectData[subjectCode];
+            document.getElementById('subject-detail-title').textContent = data.title; document.getElementById('quiz-title').textContent = data.title + ' Mastery Quiz'; document.getElementById('content-notes').innerHTML = data.notes;
+            
+            const qaContainer = document.getElementById('qa-container'); qaContainer.innerHTML = '';
+            if(data.qa && data.qa.length > 0) {
+                data.qa.forEach((item) => {
+                    qaContainer.innerHTML += `
+                        <div class="border border-warmborder rounded-2xl p-6 bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="this.querySelector('.answer').classList.toggle('hidden-view')">
+                            <h4 class="font-bold text-warmtext flex justify-between items-center text-lg"><span><span class="text-warmaccent mr-2">${item.q.split('] ')[0]}]</span> ${item.q.split('] ')[1] || item.q}</span><i class="fas fa-chevron-down text-sm text-gray-400"></i></h4>
+                            <div class="answer hidden-view mt-4 text-gray-700 text-lg bg-stone-50 p-5 rounded-xl border-l-4 border-warmaccent"><strong>Analysis:</strong> ${item.a}</div>
+                        </div>`;
+                });
+            }
+
+            window.state.currentQuizPool = data.quiz;
+            document.getElementById('quiz-results').classList.add('hidden-view'); document.getElementById('quiz-active').classList.add('hidden-view'); document.getElementById('quiz-intro').classList.remove('hidden-view');
+
+            const pdfUrl = data.handwrittenPdfUrl;
+            if (pdfUrl) {
+                document.getElementById('tab-handwritten').classList.remove('hidden'); document.getElementById('pdf-viewer-iframe').src = pdfUrl; document.getElementById('pdf-viewer-iframe').classList.remove('hidden'); document.getElementById('download-notes-btn').href = pdfUrl; document.getElementById('download-notes-btn').classList.remove('hidden'); document.getElementById('no-notes-msg').classList.add('hidden');
+            } else {
+                document.getElementById('tab-handwritten').classList.remove('hidden'); document.getElementById('pdf-viewer-iframe').classList.add('hidden'); document.getElementById('download-notes-btn').classList.add('hidden'); document.getElementById('no-notes-msg').classList.remove('hidden');
+            }
+
+            window.navigate('subject-detail'); window.switchTab('notes'); window.markActivityCompleted(subjectCode, 'opened');
+        };
+
+        window.switchTab = function(tabId) {
+            document.querySelectorAll('.subject-tab').forEach(t => t.classList.add('hidden-view')); document.getElementById('content-' + tabId).classList.remove('hidden-view');
+            ['notes', 'qa', 'quiz', 'handwritten'].forEach(id => {
+                const btn = document.getElementById('tab-' + id);
+                if(btn) { if(id === tabId) { btn.classList.add('bg-white', 'text-warmtext', 'shadow-sm'); btn.classList.remove('text-gray-500'); } else { btn.classList.remove('bg-white', 'text-warmtext', 'shadow-sm'); btn.classList.add('text-gray-500'); } }
+            });
+            if (tabId === 'notes') window.markActivityCompleted(window.state.currentSubject, 'notes'); if (tabId === 'qa') window.markActivityCompleted(window.state.currentSubject, 'qa'); if (tabId === 'handwritten') window.markActivityCompleted(window.state.currentSubject, 'hw');
+        };
+
+        window.startQuiz = function(quizIndex) {
+            window.state.quizActive = true; window.state.currentQuestion = 0; window.state.quizScore = 0; window.state.wrongAnswers = [];
+            const startIdx = (quizIndex - 1) * 10; window.state.currentQuizPool = subjectData[window.state.currentSubject].quiz.slice(startIdx, startIdx + 10);
+            if(window.state.currentQuizPool.length === 0) return alert("Not enough questions.");
+            document.getElementById('quiz-intro').classList.add('hidden-view'); document.getElementById('quiz-results').classList.add('hidden-view'); document.getElementById('quiz-active').classList.remove('hidden-view');
+            window.loadQuestion();
+        };
+
+        window.resetQuizView = function() { document.getElementById('quiz-results').classList.add('hidden-view'); document.getElementById('quiz-intro').classList.remove('hidden-view'); };
+
+        window.loadQuestion = function() {
+            const q = window.state.currentQuizPool[window.state.currentQuestion];
+            document.getElementById('quiz-progress-text').textContent = `Question ${window.state.currentQuestion + 1} of ${window.state.currentQuizPool.length}`;
+            document.getElementById('quiz-progress-bar').style.width = `${((window.state.currentQuestion + 1) / window.state.currentQuizPool.length) * 100}%`;
+            document.getElementById('quiz-question').textContent = q.q;
+            const optsContainer = document.getElementById('quiz-options'); optsContainer.innerHTML = '';
+            q.options.forEach((opt, index) => {
+                const btn = document.createElement('button'); btn.className = 'w-full text-left p-5 rounded-2xl border border-warmborder hover:border-warmaccent hover:bg-stone-50 transition-all font-medium text-warmtext text-lg shadow-sm';
+                btn.textContent = opt; btn.onclick = () => window.handleAnswer(index); optsContainer.appendChild(btn);
+            });
+        };
+
+        window.handleAnswer = function(selectedIndex) {
+            const q = window.state.currentQuizPool[window.state.currentQuestion];
+            if(selectedIndex === q.correct) window.state.quizScore++; else window.state.wrongAnswers.push({ question: q.q, given: q.options[selectedIndex], correct: q.options[q.correct] });
+            window.state.currentQuestion++; if(window.state.currentQuestion < window.state.currentQuizPool.length) window.loadQuestion(); else window.showResults();
+        };
+
+        window.showResults = function() {
+            document.getElementById('quiz-active').classList.add('hidden-view'); document.getElementById('quiz-results').classList.remove('hidden-view');
+            const marks = Math.round((window.state.quizScore / window.state.currentQuizPool.length) * 50); document.getElementById('result-score').textContent = `Marks: ${marks} / 50`;
+            const msgEl = document.getElementById('result-message'), iconEl = document.getElementById('result-icon');
+            if(marks < 10) { msgEl.textContent = "Practice more."; iconEl.innerHTML = '<i class="fas fa-frown text-red-500"></i>'; } else if (marks <= 20) { msgEl.textContent = "Keep going!"; iconEl.innerHTML = '<i class="fas fa-book text-orange-500"></i>'; } else if (marks <= 40) { msgEl.textContent = "Great work!"; iconEl.innerHTML = '<i class="fas fa-check-circle text-green-400"></i>'; } else { msgEl.textContent = "Outstanding!"; iconEl.innerHTML = '<i class="fas fa-trophy text-yellow-500"></i>'; }
+
+            const wrongList = document.getElementById('wrong-answers-list'); wrongList.innerHTML = '';
+            if(window.state.wrongAnswers.length === 0) wrongList.innerHTML = '<p class="text-green-600 font-bold text-lg">Perfect! No mistakes.</p>';
+            else {
+                window.state.wrongAnswers.forEach(w => {
+                    wrongList.innerHTML += `<div class="border-b border-warmborder pb-4"><p class="font-bold text-warmtext mb-2 text-lg">${w.question}</p><p class="text-red-500 text-md"><i class="fas fa-times mr-2"></i> Your Answer: ${w.given}</p><p class="text-green-600 font-medium text-md"><i class="fas fa-check mr-2"></i> Correct Answer: ${w.correct}</p></div>`;
+                });
+            }
+            window.markActivityCompleted(window.state.currentSubject, 'quiz', marks);
+        };
+
+        // --- Charts Initialization ---
+        let miniChartInstance = null, mainChartInstance = null;
+        window.renderMiniChart = function() {
+            const ctxEl = document.getElementById('miniProgressChart'); if(!ctxEl) return;
+            if(miniChartInstance) miniChartInstance.destroy();
+            const daysArr = ['S', 'M', 'T', 'W', 'T', 'F', 'S']; let labels = [], hoursData = [];
+            for (let i = 6; i >= 0; i--) { let d = new Date(); d.setDate(d.getDate() - i); labels.push(daysArr[d.getDay()]); let dateStr = window.getLocalISODate(d); hoursData.push(window.progressData.dailyStats[dateStr] ? parseFloat(window.progressData.dailyStats[dateStr].hours.toFixed(1)) : 0); }
+            miniChartInstance = new Chart(ctxEl.getContext('2d'), { type: 'line', data: { labels: labels, datasets: [{ label: 'Hours', data: hoursData, borderColor: '#ffffff', backgroundColor: 'rgba(255, 255, 255, 0.2)', borderWidth: 2, tension: 0.4, fill: true }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.8)' } }, y: { grid: { color: 'rgba(255,255,255,0.2)' }, ticks: { color: 'rgba(255,255,255,0.8)' } } } } });
+        };
+
+        window.renderAnalyticsChart = function() {
+            const ctxMain = document.getElementById('mainAnalyticsChart'); if(!ctxMain) return;
+            if(mainChartInstance) mainChartInstance.destroy();
+            const daysArr = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']; let labels = [], hoursData = [], quizData = [];
+            for (let i = 6; i >= 0; i--) { let d = new Date(); d.setDate(d.getDate() - i); labels.push(daysArr[d.getDay()]); let dateStr = window.getLocalISODate(d); if (window.progressData.dailyStats[dateStr]) { hoursData.push(parseFloat(window.progressData.dailyStats[dateStr].hours.toFixed(1))); quizData.push(parseFloat(window.progressData.dailyStats[dateStr].quizScoreAvg.toFixed(1))); } else { hoursData.push(0); quizData.push(0); } }
+            mainChartInstance = new Chart(ctxMain.getContext('2d'), { type: 'bar', data: { labels: labels, datasets: [{ label: 'Hours Studied', data: hoursData, backgroundColor: '#d97757', borderRadius: 6 }, { label: 'Quiz Scores Avg', data: quizData, backgroundColor: '#2c2825', borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true, grid: { color: '#e8e2d9' } }, x: { grid: { display: false } } } } });
+        };
+
+        window.initDashboard = function() {
+            if(window.state.user.name) { document.getElementById('display-name').textContent = window.state.user.name; window.updateProfilePicUI(); }
+            window.renderSubjectLibrary(); window.renderLearningCards(); window.refreshProgressUI(); window.updateAnalyticsStats();
+        };
+
+        // --- DOM Event Listeners ---
+        document.addEventListener("DOMContentLoaded", () => {
+            const getEl = id => document.getElementById(id);
+            
+            const sendOtpBtn = getEl('send-otp-btn');
+            if(sendOtpBtn) {
+                sendOtpBtn.addEventListener('click', () => {
+                    const phoneInput = getEl('phone-input'); const phoneError = getEl('phone-error');
+                    if(phoneInput && phoneInput.value.length === 10 && /^\d+$/.test(phoneInput.value)) {
+                        phoneError.classList.add('hidden'); getEl('display-phone').textContent = '+91 ' + phoneInput.value;
+                        getEl('phone-step').classList.add('hidden-view'); getEl('otp-step').classList.remove('hidden-view');
+                        window.state.expectedOtp = Math.floor(1000 + Math.random() * 9000).toString();
+                        console.log(`%c🔑 AI TUTOR OTP IS: ${window.state.expectedOtp}`, "color: #d97757; font-size: 18px; font-weight: bold; background: #f8f5f0; padding: 5px;");
+                        getEl('console-otp-msg').classList.remove('hidden-view');
+                    } else if(phoneError) phoneError.classList.remove('hidden');
+                });
+            }
+
+            const verifyOtpBtn = getEl('verify-otp-btn');
+            if(verifyOtpBtn) {
+                verifyOtpBtn.addEventListener('click', () => {
+                    const otpInputs = document.querySelectorAll('.otp-input');
+                    const otp = Array.from(otpInputs).map(i => i.value).join('');
+                    if(otp === window.state.expectedOtp && otp.length === 4) { 
+                        getEl('otp-error').classList.add('hidden'); window.state.isLoggedIn = true; getEl('login-view').classList.add('hidden-view');
+                        if(window.state.user.name) { getEl('main-app').classList.remove('hidden-view'); window.initDashboard(); } 
+                        else { getEl('onboarding-modal').classList.remove('hidden-view'); setTimeout(() => { getEl('onboarding-card').classList.remove('scale-95', 'opacity-0'); }, 10); }
+                    } else getEl('otp-error').classList.remove('hidden');
+                });
+            }
+
+            const profilePicUpload = getEl('profile-pic-upload');
+            if(profilePicUpload) {
+                profilePicUpload.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            const img = new Image();
+                            img.onload = function() {
+                                const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); canvas.width = 150; canvas.height = 150;
+                                const scale = Math.max(150 / img.width, 150 / img.height);
+                                ctx.drawImage(img, (150/2)-(img.width/2)*scale, (150/2)-(img.height/2)*scale, img.width*scale, img.height*scale);
+                                window.state.user.photo = canvas.toDataURL('image/jpeg', 0.8);
+                                window.updateProfilePicUI(); window.saveProgress();
+                            }; img.src = event.target.result;
+                        }; reader.readAsDataURL(file);
+                    }
+                });
+            }
+
+            const closeProfileBtn = getEl('close-profile-btn');
+            if(closeProfileBtn) closeProfileBtn.addEventListener('click', () => { getEl('onboarding-modal').classList.add('hidden-view'); });
+
+            const submitProfileBtn = getEl('submit-profile-btn');
+            if(submitProfileBtn) {
+                submitProfileBtn.addEventListener('click', () => {
+                    const name = getEl('user-name').value.trim();
+                    if(name) {
+                        window.state.user.name = name; window.state.user.age = getEl('user-age').value; window.state.user.interest = getEl('user-interest').value;
+                        getEl('display-name').textContent = name; window.saveProgress();
+                        getEl('onboarding-modal').classList.add('hidden-view'); getEl('main-app').classList.remove('hidden-view'); window.initDashboard();
+                    } else getEl('form-error').classList.remove('hidden');
+                });
+            }
+
+            const chatInput = getEl('chat-input'), sendChatBtn = getEl('send-chat-btn'), chatMessages = getEl('chat-messages');
+            if(sendChatBtn && chatInput && chatMessages) {
+                const handleChat = () => {
+                    const text = chatInput.value.trim(); if(!text) return;
+                    const div = document.createElement('div'); div.className = `flex gap-4 max-w-3xl ml-auto flex-row-reverse`;
+                    
+                    const userAvatar = window.state.user.photo 
+                        ? `<div class="w-10 h-10 rounded-full border border-stone-200 shadow-sm relative overflow-hidden shrink-0"><img src="${window.state.user.photo}" class="profile-img-fit z-0"></div>` 
+                        : `<div class="w-10 h-10 bg-stone-200 rounded-full flex items-center justify-center text-warmtext shrink-0 font-bold text-xl shadow-sm">${window.state.user.name ? window.state.user.name.charAt(0).toUpperCase() : 'U'}</div>`;
+                    
+                    div.innerHTML = `${userAvatar}<div class="p-5 rounded-3xl shadow-sm bg-warmtext text-white rounded-tr-none text-lg leading-relaxed">${text}</div>`;
+                    chatMessages.appendChild(div); chatInput.value = ''; chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                    const typingDiv = document.createElement('div'); typingDiv.className = 'text-gray-400 text-sm ml-16 italic mb-4 font-medium'; typingDiv.textContent = 'AI is typing...'; chatMessages.appendChild(typingDiv); chatMessages.scrollTop = chatMessages.scrollHeight;
+                    
+                    setTimeout(() => {
+                        chatMessages.removeChild(typingDiv);
+                        let response = "That's an interesting question! Could you specify if this relates to Python, Java, DSA, DBMS or Web Dev?";
+                        const lowerText = text.toLowerCase();
+                        if (lowerText.includes("dbms") || lowerText.includes("database") || lowerText.includes("sql")) response = "For Databases, remember the core ACID properties: Atomicity, Consistency, Isolation, and Durability.";
+                        else if (lowerText.includes("python")) response = "Python is great for its readability. Don't forget that Lists are mutable but Tuples are immutable!";
+                        else if (lowerText.includes("java") || lowerText.includes("oops")) response = "In Java, everything revolves around classes and objects. Remember that Strings are immutable.";
+                        else if (lowerText.includes("dsa") || lowerText.includes("algorithm")) response = "DSA requires practice! A good tip for time complexity: dividing search space by half every step is O(log N).";
+                        else if (lowerText.includes("hi") || lowerText.includes("hello")) response = `Hello ${window.state.user.name || 'there'}! I'm your AI Tutor. Let's conquer your learning goals today.`;
+                        else if (lowerText.includes("html") || lowerText.includes("css") || lowerText.includes("js")) response = "Web development relies heavily on the DOM. Keep CSS layouts responsive using Flexbox or Grid.";
+                        else if (lowerText.includes("c ") || lowerText.includes("c++") || lowerText.includes("pointer")) response = "C and C++ are all about memory management. Pointers store the memory address of another variable.";
+
+                        const botDiv = document.createElement('div'); botDiv.className = `flex gap-4 max-w-3xl`;
+                        botDiv.innerHTML = `<div class="w-10 h-10 bg-warmaccent rounded-full flex items-center justify-center text-white shrink-0 shadow-sm"><i class="fas fa-robot text-xl"></i></div><div class="p-5 rounded-3xl shadow-sm bg-white text-gray-800 border border-warmborder rounded-tl-none text-lg leading-relaxed">${response}</div>`;
+                        chatMessages.appendChild(botDiv); chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }, 1200);
+                };
+                sendChatBtn.addEventListener('click', handleChat);
+                chatInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') handleChat(); });
+            }
+
+            document.querySelectorAll('.otp-input').forEach((input, i, arr) => { input.addEventListener('input', function() { if (this.value.length === 1 && i < arr.length - 1) arr[i + 1].focus(); }); });
+
+            const savedUserStr = localStorage.getItem('aiTutorUserFinalV6');
+            if(savedUserStr) {
+                const userObj = JSON.parse(savedUserStr);
+                if(userObj && userObj.name) {
+                    window.state.user = userObj; getEl('main-app').classList.remove('hidden-view'); window.initDashboard(); 
+                } else getEl('login-view').classList.remove('hidden-view');
+            } else getEl('login-view').classList.remove('hidden-view');
+
+            setInterval(() => { 
+                if(window.state.user.name) { 
+                    window.state.currentSlide = window.state.currentSlide === 0 ? 1 : 0; 
+                    const sc = getEl('slider-container');
+                    if(sc) sc.style.transform = `translateX(-${window.state.currentSlide * 100}%)`; 
+                    document.querySelectorAll('.slider-dot').forEach((dot, idx) => { dot.style.opacity = idx === window.state.currentSlide ? '1' : '0.5'; }); 
+                } 
+            }, 5000);
+        });
+
+    </script>
+</body>
+</html>
